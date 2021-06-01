@@ -1,0 +1,67 @@
+---
+- name: Install and config Docker service
+  hosts: localhost
+  tasks:
+     - name: tasks for install the docker
+       yum:
+         name: docker
+         state: installed
+
+     - name: task for start the service of docker
+       service:
+          name: docker
+          state: started
+
+     - name: task for create a directory
+       file:
+          path: /var/log/docker_logs
+          state: directory
+
+     - name: task for create the file inside the that directory.
+       file:
+          path: /var/log/docker_logs/docker_logfile.log
+          state: touch
+
+     - name: task for write a log into docker_logfile.log
+       lineinfile:
+          path: /var/log/docker_logs/docker_logfile.log
+          state: present
+          line: DOCKER IS SUCCESSFULLY INSTALLED
+
+     - name: Start service docker, if not running
+       service:
+        name: docker
+        state: started
+
+     - name: Enable service docker, and not touch the running state
+       service:
+        name: docker
+        enabled: yes
+
+     - name: task for create the file
+       file:
+          path: ./index.html
+          state: touch
+
+     - name: task for write into index.html
+       lineinfile:
+          path: ./index.html
+          state: present
+          line: WELCOME
+
+     - name: Copy to s3
+       vars:
+        ansible_python_interpreter: /usr/bin/python3
+       aws_s3:
+        aws_access_key: AKIAXH67DQGMHCMDFJ4R
+        aws_secret_key: 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
+        bucket: ecolibriumenergybucket1502
+        object: /Dockerfile.txt
+        dest: ./Dockerfile
+        mode: get
+
+     - name: build the image
+       command: docker build -t ubuntuapache2 .
+
+     - name: create the container
+       command: docker run -td -p 80:80 --name apache2 ubuntuapache2
